@@ -1,0 +1,224 @@
+INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, invited_at, confirmation_token, confirmation_sent_at, recovery_token, recovery_sent_at, email_change_token_new, email_change, email_change_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, created_at, updated_at, phone, phone_confirmed_at, phone_change, phone_change_token, phone_change_sent_at, email_change_token_current, email_change_confirm_status, banned_until, reauthentication_token, reauthentication_sent_at, is_sso_user) VALUES
+('00000000-0000-0000-0000-000000000000', 'e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', 'authenticated', 'authenticated', 'test@test.com', crypt('password', gen_salt('bf')), '2023-02-18 23:31:13.017218+00', NULL, '', '2023-02-18 23:31:12.757017+00', '', NULL, '', '', NULL, '2023-02-18 23:31:13.01781+00', '{"provider": "email", "providers": ["email"]}', '{}', NULL, '2023-02-18 23:31:12.752281+00', '2023-02-18 23:31:13.019418+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, 'f');
+
+INSERT INTO users (id, user_name, "password", "name", last_name, email, telephone, title_id, other_title, img, department_id, auth_user_id, status, created_at, updated_at, deleted_at, id_card, birth_date) VALUES
+('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', 'user_name', 'password', 'name', 'last_name', 'test@test.com', 'telephone', null, null, null, null, 'e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, null, '1111111111111', null);
+
+-- Start data for workspaces 
+INSERT INTO workspaces (user_id, name, description, default_context_length, default_model, default_prompt, default_temperature, include_profile_context, include_workspace_instructions, instructions, is_home, sharing, embeddings_provider) VALUES 
+('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', 'Workspace 1', 'This is for testing.', 4000, 'gpt-4-turbo-preview', 'You are an assistant.', 0.5, true, true, 'These are the instructions.', false, 'private', 'openai');
+
+-- INSERT INTO workspaces (user_id, created_at, updated_at, sharing, default_context_length, default_model, default_prompt, default_temperature, description, embeddings_provider, include_profile_context, include_workspace_instructions, instructions, is_home, "name", image_path) VALUES('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa'::uuid, '2024-11-28 13:07:09.981', NULL, 'private', 4000, 'gpt-4-turbo-preview', 'You are an assistant.', 0.5, 'This is for testing.', 'openai', true, true, 'These are the instructions.', false, 'Workspace 1', '');
+-- INSERT INTO workspaces (user_id, created_at, updated_at, sharing, default_context_length, default_model, default_prompt, default_temperature, description, embeddings_provider, include_profile_context, include_workspace_instructions, instructions, is_home, "name", image_path) VALUES('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa'::uuid, '2024-11-28 13:07:09.981', '2024-11-28 15:49:46.046', 'private', 4096, 'SeaLLMs/SeaLLM-7B-v2.5', 'You are a friendly, helpful AI assistant.', 0.5, 'My home workspace.', 'openai', true, true, '', true, 'Home', '');
+
+-- Get workspace ids
+DO $$
+DECLARE
+  workspace1_id UUID;
+BEGIN
+  SELECT id INTO workspace1_id FROM workspaces WHERE name='Home';
+
+  -- start data for folders
+  INSERT INTO folders (user_id, workspace_id, name, description, type) VALUES
+  ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', workspace1_id, 'Chat Folder 1', 'This is a folder for chats', 'chats');
+
+  -- start data for files
+  INSERT INTO files (user_id, name, description, file_path, size, tokens, type) VALUES
+  ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', 'File 1', 'This is a file for testing', 'https://example.com/file1', 1000000, 250, 'pdf');
+
+  -- start data for file_workspaces
+  DECLARE
+    file1_id UUID;
+  BEGIN
+    SELECT id INTO file1_id FROM files WHERE name='File 1';
+
+    INSERT INTO file_workspaces (user_id, file_id, workspace_id) VALUES
+    ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', file1_id, workspace1_id);
+  END;
+
+  -- DECLARE
+  --   file1_id UUID;
+  -- BEGIN
+  --   SELECT id INTO file1_id FROM chats WHERE name='Chat 1';
+
+  --   -- start data for file items
+  --   INSERT INTO file_items (user_id, file_id, content, embedding) VALUES
+  --   ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', file1_id, 'File Item 1', []);
+  -- END;
+
+  -- start data for presets
+  INSERT INTO presets (user_id, created_at, updated_at, sharing, include_profile_context, include_workspace_instructions, context_length, model, name, prompt, temperature, description, embeddings_provider) VALUES
+  ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'private', TRUE, TRUE, 4000, 'gpt-4-turbo-preview', 'Preset 1', 'Prompt 1', 0.5, 'Description for Preset 1', 'openai');
+
+  -- Get preset id
+  DECLARE
+    preset1_id UUID;
+  BEGIN
+    SELECT id INTO preset1_id FROM presets WHERE name='Preset 1';
+
+    -- start data for preset_workspaces
+    INSERT INTO preset_workspaces (user_id, preset_id, workspace_id) VALUES
+    ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', preset1_id, workspace1_id);
+  END;
+
+  -- Start data for assistants 
+  INSERT INTO assistants (user_id, name, description, model, image_path, sharing, context_length, include_profile_context, include_workspace_instructions, prompt, temperature, embeddings_provider) VALUES 
+  ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', 'Albert Einstein', 'This is an Albert Einstein assistant.', 'gpt-4-turbo-preview', '', 'private', 4000, TRUE, TRUE, 'You are Albert Einstein.', 0.5, 'openai');
+
+  -- Get assistant id
+  DECLARE
+    assistant1_id UUID;
+  BEGIN
+    SELECT id INTO assistant1_id FROM assistants WHERE name='Albert Einstein';
+
+    -- start data for assistant_workspaces
+    INSERT INTO assistant_workspaces (user_id, assistant_id, workspace_id) VALUES
+    ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', assistant1_id, workspace1_id);
+  END;
+
+  -- Start data for chats 
+  INSERT INTO chats (user_id, workspace_id, name, model, prompt, temperature, context_length, include_profile_context, include_workspace_instructions, embeddings_provider) VALUES 
+  ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', workspace1_id, 'Chat 1', 'gpt-4-turbo-preview', 'You are an assistant.', 0.5, 4000, TRUE, TRUE, 'openai');
+
+  DECLARE
+    folder1_id UUID;
+  BEGIN
+    SELECT id INTO folder1_id FROM folders WHERE name='Chat Folder 1';
+
+    INSERT INTO chats (user_id, workspace_id, name, model, prompt, temperature, context_length, include_profile_context, include_workspace_instructions, folder_id, embeddings_provider) VALUES 
+    ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', workspace1_id, 'Chat 4', 'gpt-4-turbo-preview', 'You are an assistant.', 0.5, 4000, TRUE, TRUE, folder1_id, 'openai');
+  END;
+
+  -- Start data for messages 
+  -- Get chat ids
+    DECLARE
+      chat1_id UUID;
+    BEGIN
+      SELECT id INTO chat1_id FROM chats WHERE name='Chat 1';
+
+      INSERT INTO messages (user_id, chat_id, content, role, model, sequence_number, image_paths) VALUES
+      -- Chat 1
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'Hello! This is a long message with **markdown**. It contains multiple sentences and paragraphs. Let me add more content to this message. I am a user interacting with an AI assistant. I can ask the assistant to perform various tasks, such as generating text, answering questions, and even writing code. The assistant uses a powerful language model to understand my requests and generate appropriate responses. This is a very interesting and exciting technology!', 'user', 'gpt-4-turbo-preview', 0, '{}'),
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'How are you? This is another long message with *italic markdown*. It also contains multiple sentences and paragraphs. Let me add more content to this message. As an AI assistant, I can understand and respond to a wide range of requests. I can generate text, answer questions, and even write code. I use a powerful language model to understand your requests and generate appropriate responses. This is a very interesting and exciting technology!', 'assistant', 'gpt-4-turbo-preview', 1, '{}'),
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'I am fine, thank you! This is a third long message with [link markdown](http://example.com). It contains even more sentences and paragraphs. Let me add even more content to this message. As a user, I can interact with the AI assistant in a variety of ways. I can ask it to generate text, answer questions, and even write code. The assistant uses a powerful language model to understand my requests and generate appropriate responses. This is a very interesting and exciting technology!', 'user', 'gpt-4-turbo-preview', 2, '{}'),
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'Great to hear that! This is a fourth long message with `code markdown`. It contains a lot of sentences and paragraphs. Let me add even more content to this message. As an AI assistant, I can understand and respond to a wide range of requests. I can generate text, answer questions, and even write code. I use a powerful language model to understand your requests and generate appropriate responses. This is a very interesting and exciting technology!', 'assistant', 'gpt-4-turbo-preview', 3, '{}'),
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'What can you do? This is a fifth long message with > blockquote markdown. It contains a ton of sentences and paragraphs. Let me add even more content to this message. As a user, I can interact with the AI assistant in a variety of ways. I can ask it to generate text, answer questions, and even write code. The assistant uses a powerful language model to understand my requests and generate appropriate responses. This is a very interesting and exciting technology!', 'user', 'gpt-4-turbo-preview', 4, '{}'),
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'I can assist you with various tasks. This is a sixth long message with - list markdown. It contains an enormous amount of sentences and paragraphs. Let me add even more content to this message. As an AI assistant, I can understand and respond to a wide range of requests. I can generate text, answer questions, and even write code. I use a powerful language model to understand your requests and generate appropriate responses. This is a very interesting and exciting technology!', 'assistant', 'gpt-4-turbo-preview', 5, '{}'),
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'Can you assist me with my homework? This is a seventh long message with 1. numbered list markdown. It contains a plethora of sentences and paragraphs. Let me add even more content to this message. As a user, I can interact with the AI assistant in a variety of ways. I can ask it to generate text, answer questions, and even write code. The assistant uses a powerful language model to understand my requests and generate appropriate responses. This is a very interesting and exciting technology!', 'user', 'gpt-4-turbo-preview', 6, '{}'),
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'Sure, I would be happy to help. What do you need assistance with? This is an eighth long message with --- horizontal rule markdown. It contains a multitude of sentences and paragraphs. Let me add even more content to this message. As an AI assistant, I can understand and respond to a wide range of requests. I can generate text, answer questions, and even write code. I use a powerful language model to understand your requests and generate appropriate responses. This is a very interesting and exciting technology!', 'assistant', 'gpt-4-turbo-preview', 7, '{}'),
+      ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', chat1_id, 'I need help with my math homework. This is a ninth long message with # heading markdown. It contains a vast number of sentences and paragraphs. Let me add even more content to this message. As a user, I can interact with the AI assistant in a variety of ways. I can ask it to generate text, answer questions, and even write code. The assistant uses a powerful language model to understand my requests and generate appropriate responses. This is a very interesting and exciting technology!', 'user', 'gpt-4-turbo-preview', 8, '{}');
+    END;
+
+  -- Start data for prompts 
+  INSERT INTO prompts (user_id, folder_id, created_at, updated_at, sharing, content, name) VALUES 
+  ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', null, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'private', 'I want you to act as a storyteller. You will come up with entertaining stories that are engaging, imaginative and captivating for the audience. It can be fairy tales, educational stories or any other type of stories which has the potential to capture people''s attention and imagination. Depending on the target audience, you may choose specific themes or topics for your storytelling session e.g., if it’s children then you can talk about animals; If it’s adults then history-based tales might engage them better etc. My first request is ''I need an interesting story on perseverance.''', 'Storyteller');
+
+  -- Start data for prompt_workspaces
+  DECLARE
+    prompt1_id UUID;
+  BEGIN
+    SELECT id INTO prompt1_id FROM prompts WHERE name='Storyteller';
+
+    INSERT INTO prompt_workspaces (user_id, prompt_id, workspace_id) VALUES
+    ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', prompt1_id, workspace1_id);
+  END;
+
+  -- Start data for collections  
+  INSERT INTO collections (user_id, name, description, created_at, updated_at, sharing) VALUES
+  ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', 'Collection 1', 'This is a description for Collection 1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'private');
+
+  -- Start data for collection_workspaces
+  DECLARE
+    collection1_id UUID;
+  BEGIN
+    SELECT id INTO collection1_id FROM collections WHERE name='Collection 1';
+
+    INSERT INTO collection_workspaces (user_id, collection_id, workspace_id) VALUES
+    ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', collection1_id, workspace1_id);
+  END;
+
+  -- Start data for tools
+  INSERT INTO tools (user_id, description, name, schema, url, created_at, updated_at, sharing) VALUES
+  ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', 'This is a description for Tool 1', 'Tool 1', '{}', 'http://example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'private');
+
+  -- Start data for tool_workspaces
+  DECLARE
+    tool1_id UUID;
+    workspace1_id UUID;
+  BEGIN
+    SELECT id INTO tool1_id FROM tools WHERE name='Tool 1';
+    SELECT id INTO workspace1_id FROM workspaces WHERE name='Home';
+
+    INSERT INTO tool_workspaces (user_id, tool_id, workspace_id) VALUES
+    ('e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa', tool1_id, workspace1_id);
+  END;
+
+END $$;
+
+-- insert roles
+INSERT INTO roles (id, code, role_name, status, created_at, created_by, updated_at, updated_by, deleted_at) VALUES('00000000-0000-0000-0000-000000000000'::uuid, 'ROLE001', 'Super Admin', 'active', '2024-11-24 16:42:11.065', NULL, '2024-11-24 16:42:11.065', NULL, NULL);
+
+-- insert has_roles
+INSERT INTO has_roles (id, user_id, role_id) VALUES('2fa917b1-e45c-4e70-8846-4e8813fddddc'::uuid, 'e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa'::uuid, '00000000-0000-0000-0000-000000000000'::uuid);
+
+-- insert menus
+INSERT INTO menus (id, sort, menu_name, icon, key_name, status, created_at, created_by, updated_at, updated_by) VALUES('334aac37-75a4-4468-9a1c-8c645c7b8994'::uuid, 1, 'หน้าหลัก', NULL, 'menu1', 'active', NULL, NULL, NULL, NULL);
+INSERT INTO menus (id, sort, menu_name, icon, key_name, status, created_at, created_by, updated_at, updated_by) VALUES('9df17eb7-e238-4709-b22b-56d11c202ed5'::uuid, 2, 'ตั้งค่าโปรไฟล์', NULL, 'menu2', 'active', NULL, NULL, NULL, NULL);
+INSERT INTO menus (id, sort, menu_name, icon, key_name, status, created_at, created_by, updated_at, updated_by) VALUES('ddb3ffc3-c01b-4c6d-a4d5-b42aa53f9684'::uuid, 3, 'ประวัติการแชท', NULL, 'menu3', 'active', NULL, NULL, NULL, NULL);
+INSERT INTO menus (id, sort, menu_name, icon, key_name, status, created_at, created_by, updated_at, updated_by) VALUES('834e997c-cfd1-41c5-924a-1b9c4b87b7c6'::uuid, 4, 'ไฟล์พื้นฐาน', NULL, 'menu4', 'active', NULL, NULL, NULL, NULL);
+INSERT INTO menus (id, sort, menu_name, icon, key_name, status, created_at, created_by, updated_at, updated_by) VALUES('eb995e01-6b27-46e3-9dae-e361aad1095d'::uuid, 5, 'ข้อมูลพื้นฐาน', NULL, 'menu5', 'active', NULL, NULL, NULL, NULL);
+INSERT INTO menus (id, sort, menu_name, icon, key_name, status, created_at, created_by, updated_at, updated_by) VALUES('bd15c30e-8d44-4bc5-a68f-62884f6ccabc'::uuid, 6, 'ตั้งค่าผู้ใช้งาน', NULL, 'menu6', 'active', NULL, NULL, NULL, NULL);
+INSERT INTO menus (id, sort, menu_name, icon, key_name, status, created_at, created_by, updated_at, updated_by) VALUES('aab55fd6-b9ff-486e-823d-d1b5d451bc51'::uuid, 7, 'ตั้งค่าบทบาท', NULL, 'menu7', 'active', NULL, NULL, NULL, NULL);
+
+-- insert permissons
+INSERT INTO permissions (id, menu_id, role_id, "action", status, created_at, created_by, updated_at, updated_by) VALUES('4dca6d37-a94f-4c35-a0e1-da2443dc776d'::uuid, '334aac37-75a4-4468-9a1c-8c645c7b8994'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'can_edit_self', NULL, NULL, NULL, NULL, NULL);
+
+-- insert models
+INSERT INTO models 
+(
+  id,
+  user_id,
+  folder_id,
+  created_at,
+  updated_at,
+  sharing,
+  api_key,
+  base_url,
+  description,
+  model_id,
+  "name",
+  context_length
+) 
+VALUES
+(
+  '072857b6-ff26-4b5f-89c7-e9ff0d2c5fa1'::uuid,
+  'e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa'::uuid,
+  NULL,
+  '2024-11-28 15:49:11.334',
+  NULL,
+  'private',
+  'float16-vXqgjoGg8QSsJ5NBvqGHbJHvrOjQEhJYpYsy5M570WB2iWDuo6',
+  'https://api.float16.cloud/dedicate/Ssi5CMBkNK/v1/',
+  '',
+  'SeaLLMs/SeaLLM-7B-v2.5',
+  'float16',
+  4096
+);
+
+-- insert model_workspaces
+INSERT INTO model_workspaces 
+(
+  user_id, 
+  model_id,
+  workspace_id,
+  created_at,
+  updated_at
+) 
+VALUES
+(
+  'e9fc7e46-a8a5-4fd4-8ba7-af485013e6fa'::uuid,
+   (SELECT id FROM models WHERE model_id = 'SeaLLMs/SeaLLM-7B-v2.5'),
+  (SELECT id FROM workspaces WHERE is_home = TRUE),
+  '2024-11-28 15:49:11.391', 
+  NULL
+);
